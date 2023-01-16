@@ -10,8 +10,26 @@ contract RobotsTest is Test {
     function setUp() public {
         robots = new RobotsTxt();
     }
+    function test_getDefaultLicense_withoutSettingitOnSelf_returnsEmpty() public {
+        assertEq(robots.getDefaultLicense(address(this)), "");
+    }
+    function test_ownableRobots_getDefaultLicense_empty() public {
+        assertEq(robots.getDefaultLicense(address(robots)), "");
+        robots.setDefaultLicense(address(robots), "https://example.com/robots.txt");
+        assertEq(robots.getDefaultLicense(address(robots)), "https://example.com/robots.txt");
+    }
+
+//actions count
+    function  test_getLicenseActionsCount_withoutSettingitOnSelf_returnsZero() public {
+        assertEq(robots.getLicenseActionsCount(), 0);
+        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
+        assertEq(robots.getLicenseActionsCount(), 1);
+        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
+        assertEq(robots.getLicenseActionsCount(), 2);
+    }   
 
     function test_setDefaultLicense_OnSelf_works() public {
+        assertEq(robots.getDefaultLicense(address(this)), "");
         robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
         assertEq(robots.getDefaultLicense(address(this)), "https://example.com/robots.txt");
     }
@@ -32,20 +50,6 @@ contract RobotsTest is Test {
         vm.expectRevert();
         robots.setDefaultLicense(address(notOwned), "https://example.com/robots.txt");
     }
-
-    function test_CheckCOuntOfLicenseActions () public {
-        assertEq(robots.getTotalLicenseActions(), 0);
-        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
-        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
-        assertEq(robots.getTotalLicenseActions(), 2);
-    }
-    function test_CheckLicensedAddressesBy() public {
-        assertEq(robots.getLicensedAddressesByOwner(address(this)).length, 0);
-        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
-        robots.setDefaultLicense(address(this), "https://example.com/robots.txt");
-        assertEq(robots.getLicensedAddressesByOwner(address(this)).length, 2);
-    }
-
 }
 
 
