@@ -6,10 +6,11 @@ interface IRobot {
     error ZeroAddress();
     error SameAddress();
     error NotRobotTxt();
+    error NotTransferable();
 
     event RobotTxtUpdated(address indexed robotTxt);
 
-    function mintOne(address to) external;
-    function burnOne(address from) external;
+    function mint(address to) external;
+    function burn(address from) external;
     function setRobotTxt(address newRobotTxt) external;
 }

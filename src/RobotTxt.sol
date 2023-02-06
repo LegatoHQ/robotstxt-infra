@@ -36,13 +36,18 @@ import "./IRobotTxt.sol";
 
 contract RobotTxt is IRobotTxt, Ownable {
     IRobot public robot;
-    mapping(address => string) public uris;
+    mapping(address => string) public licenseOf;
     mapping(address => address[]) public ownerLicenses;
+    mapping(address => address) public contractAddressToOwnerWhitelist;
     uint256 public totalLicenseCount;
 
     modifier senderMustBeOwnerOf(address _owned) {
         if (_owned == address(0)) revert ZeroAddress();
-        if (msg.sender != Ownable(_owned).owner()) revert NotOwner();
+        try Ownable(_owned).owner() returns (address contractOwner) {
+            if (msg.sender != contractOwner) revert NotOwner();
+        } catch {
+            if (contractAddressToOwnerWhitelist[_owned] != msg.sender) revert NotWhitelisted();
+        }
         _;
     }
 
@@ -59,12 +64,12 @@ contract RobotTxt is IRobotTxt, Ownable {
         if (bytes(_licenseUri).length == 0) revert ZeroValue();
 
         /// if the license is already registered, revert
-        if (bytes(uris[_for]).length != 0) revert LicenseAlreadyRegistered();
+        if (bytes(licenseOf[_for]).length != 0) revert LicenseAlreadyRegistered();
 
         ownerLicenses[msg.sender].push(_for);
-        uris[_for] = _licenseUri;
+        licenseOf[_for] = _licenseUri;
 
-        robot.mintOne(msg.sender);
+        robot.mint(msg.sender);
 
         totalLicenseCount++;
 
@@ -81,8 +86,8 @@ contract RobotTxt is IRobotTxt, Ownable {
     /// @notice remove a license URI _for a license owned by the license owner
     /// @param _for the address of the license to register
     function removeDefaultLicense(address _for) public senderMustBeOwnerOf(_for) {
-        if (bytes(uris[_for]).length == 0) revert LicenseNotRegistered();
-        uris[_for] = "";
+        if (bytes(licenseOf[_for]).length == 0) revert LicenseNotRegistered();
+        licenseOf[_for] = "";
 
         address[] memory licenses = ownerLicenses[msg.sender];
         delete ownerLicenses[msg.sender];
@@ -93,9 +98,23 @@ contract RobotTxt is IRobotTxt, Ownable {
             }
         }
 
-        robot.burnOne(msg.sender);
+        robot.burn(msg.sender);
         totalLicenseCount--;
 
         emit LicenseRemoved(msg.sender, _for);
+    }
+
+    function whitelistOwnerContract(address owner, address contractAddress) external onlyOwner {
+        if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
+        if (contractAddressToOwnerWhitelist[contractAddress] == owner) revert AlreadyWhitelisted();
+        contractAddressToOwnerWhitelist[contractAddress] = owner;
+        emit ContractWhitelisted(owner, contractAddress);
+    }
+
+    function delistOwnerContract(address owner, address contractAddress) external onlyOwner {
+        if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
+        if (contractAddressToOwnerWhitelist[contractAddress] != owner) revert NotWhitelisted();
+        delete contractAddressToOwnerWhitelist[contractAddress];
+        emit ContractDelisted(owner, contractAddress);
     }
 }

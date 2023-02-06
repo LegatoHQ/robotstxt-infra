@@ -11,9 +11,13 @@ contract RobotTxtTest is Test {
     error ZeroAddress();
     error LicenseAlreadyRegistered();
     error LicenseNotRegistered();
+    error AlreadyWhitelisted();
+    error NotWhitelisted();
 
     event LicenseSet(address indexed _by, address indexed _for, string _licenseUri);
     event LicenseRemoved(address indexed _by, address indexed _for);
+    event ContractWhitelisted(address indexed owner, address indexed contractAddress);
+    event ContractDelisted(address indexed owner, address indexed contractAddress);
 
     struct LicensesData {
         uint256 count;
@@ -31,6 +35,7 @@ contract RobotTxtTest is Test {
     OwnedContract public user1Owned1;
     OwnedContract public user1Owned2;
     OwnedContract public user2Owned1;
+    NotOwnedContract public user1NotOwned1;
 
     string public constant EXAMPLE_URI = "https://example.com/robotTxt.txt";
 
@@ -46,6 +51,7 @@ contract RobotTxtTest is Test {
         vm.startPrank(USER1);
         user1Owned1 = new OwnedContract();
         user1Owned2 = new OwnedContract();
+        user1NotOwned1 = new NotOwnedContract();
         vm.stopPrank();
 
         vm.startPrank(USER2);
@@ -58,21 +64,21 @@ contract RobotTxtTest is Test {
     function testGetDefaultLicense() public {
         _setupLicenses();
 
-        string memory user1Owned1Uri = robotTxt.uris(address(user1Owned1));
-        string memory user1Owned2Uri = robotTxt.uris(address(user1Owned2));
+        string memory user1Owned1Uri = robotTxt.licenseOf(address(user1Owned1));
+        string memory user1Owned2Uri = robotTxt.licenseOf(address(user1Owned2));
 
         assertEq(user1Owned1Uri, EXAMPLE_URI);
         assertEq(user1Owned2Uri, EXAMPLE_URI);
     }
 
     function testGetDefaultLicenseEmpty() public {
-        assertEq(robotTxt.uris(address(0)), "");
-        assertEq(robotTxt.uris(address(user1Owned1)), "");
+        assertEq(robotTxt.licenseOf(address(0)), "");
+        assertEq(robotTxt.licenseOf(address(user1Owned1)), "");
     }
 
     /// setDefaultLicense()
 
-    function testSetDefaultLicense() public {
+    function testSetDefaultLicenseOwned() public {
         uint256 totalLicenseCountBefore = robotTxt.totalLicenseCount();
         uint256 user1LicenseCountBefore = robotTxt.getOwnerLicenseCount(USER1);
         uint256 user1TokenBalance = robotToken.balanceOf(USER1);
@@ -88,7 +94,31 @@ contract RobotTxtTest is Test {
 
         assertEq(totalLicenseCountAfter, totalLicenseCountBefore + 1);
         assertEq(user1LicenseCountAfter, user1LicenseCountBefore + 1);
-        assertEq(robotTxt.uris(address(user1Owned1)), EXAMPLE_URI);
+        assertEq(robotTxt.licenseOf(address(user1Owned1)), EXAMPLE_URI);
+        assertEq(user1TokenAfter, user1TokenBalance + 1);
+        assertEq(robotToken.totalSupply(), 1);
+    }
+
+    function testSetDefaultLicenseWhitelisted() public {
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(USER1, address(user1NotOwned1));
+
+        uint256 totalLicenseCountBefore = robotTxt.totalLicenseCount();
+        uint256 user1LicenseCountBefore = robotTxt.getOwnerLicenseCount(USER1);
+        uint256 user1TokenBalance = robotToken.balanceOf(USER1);
+
+        vm.expectEmit(true, true, false, true);
+        emit LicenseSet(USER1, address(user1NotOwned1), EXAMPLE_URI);
+        vm.prank(USER1);
+        robotTxt.setDefaultLicense(address(user1NotOwned1), EXAMPLE_URI);
+
+        uint256 totalLicenseCountAfter = robotTxt.totalLicenseCount();
+        uint256 user1LicenseCountAfter = robotTxt.getOwnerLicenseCount(USER1);
+        uint256 user1TokenAfter = robotToken.balanceOf(USER1);
+
+        assertEq(totalLicenseCountAfter, totalLicenseCountBefore + 1);
+        assertEq(user1LicenseCountAfter, user1LicenseCountBefore + 1);
+        assertEq(robotTxt.licenseOf(address(user1NotOwned1)), EXAMPLE_URI);
         assertEq(user1TokenAfter, user1TokenBalance + 1);
         assertEq(robotToken.totalSupply(), 1);
     }
@@ -111,6 +141,12 @@ contract RobotTxtTest is Test {
         robotTxt.setDefaultLicense(address(666), EXAMPLE_URI);
     }
 
+    function testCannotSetDefaultLicenseNotOwnedNotWhitelisted() public {
+        vm.expectRevert(abi.encodeWithSelector(NotWhitelisted.selector));
+        vm.prank(USER1);
+        robotTxt.setDefaultLicense(address(user1NotOwned1), EXAMPLE_URI);
+    }
+
     function testCannotSetDefaultLicenseLicenseAlreadyRegistered() public {
         _setupLicenses();
         vm.expectRevert(abi.encodeWithSelector(LicenseAlreadyRegistered.selector));
@@ -120,7 +156,7 @@ contract RobotTxtTest is Test {
 
     /// removeDefaultLicense()
 
-    function testRemoveDefaultLicense() public {
+    function testRemoveDefaultLicenseOwned() public {
         _setupLicenses();
 
         uint256 totalLicenseCountBefore = robotTxt.totalLicenseCount();
@@ -143,7 +179,35 @@ contract RobotTxtTest is Test {
 
         assertEq(totalLicenseCountAfter, totalLicenseCountBefore - 1);
         assertEq(user1LicenseCountAfter, user1LicenseCountBefore - 1);
-        assertEq(robotTxt.uris(address(user1Owned1)), "");
+        assertEq(robotTxt.licenseOf(address(user1Owned1)), "");
+        assertEq(user1TokenAfter, user1TokenBalance - 1);
+        assertEq(robotTokenSupplyAfter, robotTokenSupplyBefore - 1);
+    }
+
+    function testRemoveDefaultLicenseWhiteListed() public {
+        _setupNotOwned();
+
+        uint256 totalLicenseCountBefore = robotTxt.totalLicenseCount();
+        uint256 user1LicenseCountBefore = robotTxt.getOwnerLicenseCount(USER1);
+        uint256 user1TokenBalance = robotToken.balanceOf(USER1);
+        uint256 robotTokenSupplyBefore = robotToken.totalSupply();
+
+        vm.prank(USER1);
+        robotToken.approve(address(robotTxt), 1);
+
+        vm.expectEmit(true, true, false, true);
+        emit LicenseRemoved(USER1, address(user1NotOwned1));
+        vm.prank(USER1);
+        robotTxt.removeDefaultLicense(address(user1NotOwned1));
+
+        uint256 totalLicenseCountAfter = robotTxt.totalLicenseCount();
+        uint256 user1LicenseCountAfter = robotTxt.getOwnerLicenseCount(USER1);
+        uint256 user1TokenAfter = robotToken.balanceOf(USER1);
+        uint256 robotTokenSupplyAfter = robotToken.totalSupply();
+
+        assertEq(totalLicenseCountAfter, totalLicenseCountBefore - 1);
+        assertEq(user1LicenseCountAfter, user1LicenseCountBefore - 1);
+        assertEq(robotTxt.licenseOf(address(user1NotOwned1)), "");
         assertEq(user1TokenAfter, user1TokenBalance - 1);
         assertEq(robotTokenSupplyAfter, robotTokenSupplyBefore - 1);
     }
@@ -166,11 +230,76 @@ contract RobotTxtTest is Test {
         robotTxt.removeDefaultLicense(address(user1Owned1));
     }
 
+    /// whitelistOwnerContract()
+
+    function testWhitelistOwnerContract() public {
+        vm.expectEmit(true, true, false, true);
+        emit ContractWhitelisted(USER1, address(user1NotOwned1));
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(USER1, address(user1NotOwned1));
+
+        assertEq(robotTxt.contractAddressToOwnerWhitelist(address(user1NotOwned1)), USER1);
+    }
+
+    function testWhitelistOwnerContractZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(address(0), address(user1NotOwned1));
+
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(USER1, address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(address(0), address(0));
+    }
+
+    function testWhitelistOwnerContractAlreadyWhitelisted() public {
+        _setupNotOwned();
+        vm.expectRevert(abi.encodeWithSelector(AlreadyWhitelisted.selector));
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(USER1, address(user1NotOwned1));
+    }
+
+    /// delistOwnerContract()
+
+    function testDelistOwnerContract() public {
+        _setupNotOwned();
+
+        vm.expectEmit(true, true, false, true);
+        emit ContractDelisted(USER1, address(user1NotOwned1));
+        vm.prank(OWNER);
+        robotTxt.delistOwnerContract(USER1, address(user1NotOwned1));
+
+        assertEq(robotTxt.contractAddressToOwnerWhitelist(address(user1NotOwned1)), address(0));
+    }
+
+    function testDelistOwnerContractZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.delistOwnerContract(address(0), address(user1NotOwned1));
+
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.delistOwnerContract(USER1, address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
+        vm.prank(OWNER);
+        robotTxt.delistOwnerContract(address(0), address(0));
+    }
+
+    function testDelistOwnerContractNotWhitelisted() public {
+        vm.expectRevert(abi.encodeWithSelector(NotWhitelisted.selector));
+        vm.prank(OWNER);
+        robotTxt.delistOwnerContract(USER1, address(user1NotOwned1));
+    }
+
     /// private functions
 
     function _setupLicenses() private {
-        assertEq(robotTxt.uris(address(user1Owned1)), "");
-        assertEq(robotTxt.uris(address(user1Owned2)), "");
+        assertEq(robotTxt.licenseOf(address(user1Owned1)), "");
+        assertEq(robotTxt.licenseOf(address(user1Owned2)), "");
 
         vm.startPrank(USER1);
 
@@ -178,6 +307,14 @@ contract RobotTxtTest is Test {
         robotTxt.setDefaultLicense(address(user1Owned2), EXAMPLE_URI);
 
         vm.stopPrank();
+    }
+
+    function _setupNotOwned() public {
+        vm.prank(OWNER);
+        robotTxt.whitelistOwnerContract(USER1, address(user1NotOwned1));
+
+        vm.prank(USER1);
+        robotTxt.setDefaultLicense(address(user1NotOwned1), EXAMPLE_URI);
     }
 }
 
@@ -191,4 +328,8 @@ contract OwnedContract {
     function setOwner(address _owner) public {
         owner = _owner;
     }
+}
+
+contract NotOwnedContract {
+    constructor() {}
 }

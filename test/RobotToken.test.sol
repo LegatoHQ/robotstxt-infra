@@ -8,6 +8,7 @@ contract RobotTxtTest is Test {
     error ZeroAddress();
     error SameAddress();
     error NotRobotTxt();
+    error NotTransferable();
 
     event RobotTxtUpdated(address indexed robotTxt);
 
@@ -24,14 +25,14 @@ contract RobotTxtTest is Test {
         vm.stopPrank();
     }
 
-    /// mintOne()
+    /// mint()
 
     function testMintOne() public {
         uint256 user1BalanceBefore = robotToken.balanceOf(USER1);
         uint256 robotTokenSupplyBefore = robotToken.totalSupply();
 
         vm.prank(ROBOT_TXT);
-        robotToken.mintOne(USER1);
+        robotToken.mint(USER1);
 
         uint256 user1BalanceAfter = robotToken.balanceOf(USER1);
         uint256 robotTokenSupplyAfter = robotToken.totalSupply();
@@ -42,10 +43,10 @@ contract RobotTxtTest is Test {
 
     function testCannotMintOneNotRobotTxt() public {
         vm.expectRevert(abi.encodeWithSelector(NotRobotTxt.selector));
-        robotToken.mintOne(USER1);
+        robotToken.mint(USER1);
     }
 
-    /// burnOne()
+    /// burn()
 
     function testBurnOne() public {
         testMintOne();
@@ -57,7 +58,7 @@ contract RobotTxtTest is Test {
         robotToken.approve(ROBOT_TXT, 1);
 
         vm.prank(ROBOT_TXT);
-        robotToken.burnOne(USER1);
+        robotToken.burn(USER1);
 
         uint256 user1BalanceAfter = robotToken.balanceOf(USER1);
         uint256 robotTokenSupplyAfter = robotToken.totalSupply();
@@ -68,7 +69,7 @@ contract RobotTxtTest is Test {
 
     function testCannotBurnOneNotRobotTxt() public {
         vm.expectRevert(abi.encodeWithSelector(NotRobotTxt.selector));
-        robotToken.burnOne(USER1);
+        robotToken.burn(USER1);
     }
 
     /// setRobotTxt()
@@ -87,7 +88,7 @@ contract RobotTxtTest is Test {
         robotToken.setRobotTxt(USER1);
     }
 
-     function testCannotSetRobotTxtZeroAddress() public {
+    function testCannotSetRobotTxtZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(ZeroAddress.selector));
         vm.prank(OWNER);
         robotToken.setRobotTxt(address(0));
@@ -97,5 +98,25 @@ contract RobotTxtTest is Test {
         vm.expectRevert(abi.encodeWithSelector(SameAddress.selector));
         vm.prank(OWNER);
         robotToken.setRobotTxt(ROBOT_TXT);
+    }
+
+    /// test non transferability
+
+    function testCannotTransferToken() public {
+        vm.prank(ROBOT_TXT);
+        robotToken.mint(USER1);
+
+        uint256 user1BalanceBefore = robotToken.balanceOf(USER1);
+
+        vm.expectRevert(abi.encodeWithSelector(NotTransferable.selector));
+        vm.prank(USER1);
+        robotToken.transfer(address(4), 1);
+
+        uint256 user1BalanceAfter = robotToken.balanceOf(USER1);
+        assertEq(user1BalanceBefore, user1BalanceAfter);
+
+        vm.expectRevert(abi.encodeWithSelector(NotTransferable.selector));
+        robotToken.transferFrom(USER1, address(4), 1);
+        assertEq(user1BalanceAfter, robotToken.balanceOf(USER1));
     }
 }
