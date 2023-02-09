@@ -7,3 +7,4 @@ forge create --rpc-url $MAINNET_RPC \
     --etherscan-api-key $ETHERSCAN_API_KEY \
     --verify \
     src/token/Robot.sol:Robot
+    
