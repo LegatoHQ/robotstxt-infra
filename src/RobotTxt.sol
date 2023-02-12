@@ -36,7 +36,7 @@ import "./IRobotTxt.sol";
 
 contract RobotTxt is IRobotTxt, Ownable {
     IRobot public robot;
-    mapping(address => string) public licenseOf;
+    mapping(address => LicenseData) public licenseOf;
     mapping(address => address[]) public ownerLicenses;
     mapping(address => address) public contractAddressToOwnerWhitelist;
     uint256 public totalLicenseCount;
@@ -60,20 +60,20 @@ contract RobotTxt is IRobotTxt, Ownable {
     /// @notice registers a new license URI _for a license owned by the license owner
     /// @param _for the address of the license to register
     /// @param _licenseUri the URI of the license
-    function setDefaultLicense(address _for, string memory _licenseUri) public senderMustBeOwnerOf(_for) {
+    /// @param _info the URI of the license info
+    function setDefaultLicense(address _for, string memory _licenseUri, string memory _info) public senderMustBeOwnerOf(_for) {
         if (bytes(_licenseUri).length == 0) revert ZeroValue();
+        LicenseData memory licenseData = licenseOf[_for];
 
-        /// if the license is already registered, revert
-        if (bytes(licenseOf[_for]).length != 0) revert LicenseAlreadyRegistered();
+        if (bytes(licenseData.uri).length == 0) {
+            robot.mint(msg.sender);
+            totalLicenseCount++;
+            ownerLicenses[msg.sender].push(_for);
+        }
 
-        ownerLicenses[msg.sender].push(_for);
-        licenseOf[_for] = _licenseUri;
+        licenseOf[_for] = LicenseData(_licenseUri, _info);
 
-        robot.mint(msg.sender);
-
-        totalLicenseCount++;
-
-        emit LicenseSet(msg.sender, _for, _licenseUri);
+        emit LicenseSet(msg.sender, _for, _licenseUri, _info);
     }
 
     /// @notice returns a license count for a given owner
@@ -86,8 +86,12 @@ contract RobotTxt is IRobotTxt, Ownable {
     /// @notice remove a license URI _for a license owned by the license owner
     /// @param _for the address of the license to register
     function removeDefaultLicense(address _for) public senderMustBeOwnerOf(_for) {
-        if (bytes(licenseOf[_for]).length == 0) revert LicenseNotRegistered();
-        licenseOf[_for] = "";
+        LicenseData memory licenseData = licenseOf[_for];
+        if(bytes(licenseData.uri).length == 0) {
+            revert LicenseNotRegistered();
+        }
+
+        delete licenseOf[_for];
 
         address[] memory licenses = ownerLicenses[msg.sender];
         delete ownerLicenses[msg.sender];
