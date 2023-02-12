@@ -6,17 +6,21 @@ interface IRobotTxt {
     error NotOwner();
     error ZeroValue();
     error ZeroAddress();
-    error LicenseAlreadyRegistered();
     error LicenseNotRegistered();
     error AlreadyWhitelisted();
     error NotWhitelisted();
 
-    event LicenseSet(address indexed _by, address indexed _for, string _licenseUri);
+    event LicenseSet(address indexed _by, address indexed _for, string _licenseUri, string _info);
     event LicenseRemoved(address indexed _by, address indexed _for);
     event ContractWhitelisted(address indexed owner, address indexed contractAddress);
     event ContractDelisted(address indexed owner, address indexed contractAddress);
 
-    function setDefaultLicense(address _for, string memory _licenseUri) external;
+    struct LicenseData {
+        string uri;
+        string info;
+    }
+
+    function setDefaultLicense(address _for, string memory _licenseUri, string memory _info) external;
     function getOwnerLicenseCount(address owner) external view returns (uint256);
     function whitelistOwnerContract(address owner, address contractAddress) external;
     function delistOwnerContract(address owner, address contractAddress) external;
