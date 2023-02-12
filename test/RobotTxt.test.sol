@@ -18,7 +18,7 @@ contract RobotTxtTest is Test {
     event ContractWhitelisted(address indexed owner, address indexed contractAddress);
     event ContractDelisted(address indexed owner, address indexed contractAddress);
 
-     struct LicenseData {
+    struct LicenseData {
         string uri;
         string info;
     }
@@ -307,7 +307,6 @@ contract RobotTxtTest is Test {
     /// private functions
 
     function _setupLicenses() private {
-
         vm.startPrank(USER1);
 
         robotTxt.setDefaultLicense(address(user1Owned1), EXAMPLE_URI, EXAMPLE_INFO);

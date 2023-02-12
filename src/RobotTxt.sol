@@ -61,7 +61,10 @@ contract RobotTxt is IRobotTxt, Ownable {
     /// @param _for the address of the license to register
     /// @param _licenseUri the URI of the license
     /// @param _info the URI of the license info
-    function setDefaultLicense(address _for, string memory _licenseUri, string memory _info) public senderMustBeOwnerOf(_for) {
+    function setDefaultLicense(address _for, string memory _licenseUri, string memory _info)
+        public
+        senderMustBeOwnerOf(_for)
+    {
         if (bytes(_licenseUri).length == 0) revert ZeroValue();
         LicenseData memory licenseData = licenseOf[_for];
 
@@ -87,7 +90,7 @@ contract RobotTxt is IRobotTxt, Ownable {
     /// @param _for the address of the license to register
     function removeDefaultLicense(address _for) public senderMustBeOwnerOf(_for) {
         LicenseData memory licenseData = licenseOf[_for];
-        if(bytes(licenseData.uri).length == 0) {
+        if (bytes(licenseData.uri).length == 0) {
             revert LicenseNotRegistered();
         }
 
