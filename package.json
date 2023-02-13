@@ -1,5 +1,8 @@
 {
   "name": "hardhat-project",
+  "scripts": {
+    "types": "echo COPYING TYPECHAIN --------- && rm -rf ../robotstxt-ui/lib/typechain-types && cp -TRv typechain-types ../robotstxt-ui/lib/typechain-types/"
+  }, 
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.1",
     "@typechain/ethers-v5": "^10.2.0",
