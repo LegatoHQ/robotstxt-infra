@@ -30,7 +30,7 @@
  */
 pragma solidity ^0.8.13;
 
-import "openzeppelin/access/Ownable.sol";
+import "lib/openzeppelin-contracts/contracts//access/Ownable.sol";
 import "./token/IRobot.sol";
 import "./IRobotTxt.sol";
 

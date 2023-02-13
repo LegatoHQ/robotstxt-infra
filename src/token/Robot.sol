@@ -3,8 +3,8 @@
 pragma solidity ^0.8.13;
 
 import "./IRobot.sol";
-import "openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
-import "openzeppelin/access/Ownable.sol";
+import "lib/openzeppelin-contracts/contracts//token/ERC20/extensions/ERC20Burnable.sol";
+import "lib/openzeppelin-contracts/contracts//access/Ownable.sol";
 
 contract Robot is IRobot, ERC20Burnable, Ownable {
     address public robotTxt;

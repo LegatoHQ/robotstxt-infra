@@ -1,6 +1,11 @@
 # Compiler files
 cache/
+artifacts/
 out/
+node_modules/
+package-lock.json
+yarn.lock
+
 
 # Ignores development broadcast logs
 !/broadcast
@@ -11,3 +16,15 @@ out/
 .env
 
 scripts/deployParams.sh
+
+node_modules
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Hardhat files
+cache
+artifacts
+
