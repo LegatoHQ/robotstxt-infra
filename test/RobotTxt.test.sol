@@ -142,7 +142,7 @@ contract RobotTxtTest is Test {
     }
 
     function testCannotSetDefaultLicenseNotOwner() public {
-        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector));
+        vm.expectRevert();
         vm.prank(USER1);
         robotTxt.setDefaultLicense(address(user2Owned1), EXAMPLE_URI, EXAMPLE_INFO);
     }
@@ -153,8 +153,18 @@ contract RobotTxtTest is Test {
         robotTxt.setDefaultLicense(address(666), EXAMPLE_URI, EXAMPLE_INFO);
     }
 
+    function testCanSetLicenseOnOwnAddress() public {
+        address THE_USER = address(10);
+        vm.prank(THE_USER);
+        robotTxt.setDefaultLicense(THE_USER, EXAMPLE_URI, EXAMPLE_INFO);
+
+        (string memory uri, string memory info) = robotTxt.licenseOf(THE_USER);
+        assertEq(uri, EXAMPLE_URI);
+        assertEq(info, EXAMPLE_INFO);
+    }
+
     function testCannotSetDefaultLicenseNotOwnedNotWhitelisted() public {
-        vm.expectRevert(abi.encodeWithSelector(NotWhitelisted.selector));
+        vm.expectRevert();
         vm.prank(USER1);
         robotTxt.setDefaultLicense(address(user1NotOwned1), EXAMPLE_URI, EXAMPLE_INFO);
     }
@@ -228,7 +238,7 @@ contract RobotTxtTest is Test {
     }
 
     function testCannotRemoveDefaultLicenseNotOwner() public {
-        vm.expectRevert(abi.encodeWithSelector(NotOwner.selector));
+        vm.expectRevert();
         vm.prank(USER1);
         robotTxt.removeDefaultLicense(address(user2Owned1));
     }

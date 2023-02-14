@@ -33,6 +33,8 @@ pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts//access/Ownable.sol";
 import "./token/IRobot.sol";
 import "./IRobotTxt.sol";
+// import "forge-std/console.sol";
+//forge console
 
 contract RobotTxt is IRobotTxt, Ownable {
     IRobot public robot;
@@ -43,11 +45,18 @@ contract RobotTxt is IRobotTxt, Ownable {
 
     modifier senderMustBeOwnerOf(address _owned) {
         if (_owned == address(0)) revert ZeroAddress();
-        try Ownable(_owned).owner() returns (address contractOwner) {
-            if (msg.sender != contractOwner) revert NotOwner();
-        } catch {
-            if (contractAddressToOwnerWhitelist[_owned] != msg.sender) revert NotWhitelisted();
+        bool isSelfOwner = msg.sender == _owned;
+        bool isWhiteListed = contractAddressToOwnerWhitelist[_owned] == msg.sender;
+        bool isOwnableOwner = false;
+
+        if (!isSelfOwner && !isWhiteListed) {
+            try Ownable(_owned).owner() returns (address contractOwner) {
+                if (msg.sender == contractOwner) {
+                    isOwnableOwner = true;
+                }
+            } catch {}
         }
+        require(isSelfOwner || isOwnableOwner || isWhiteListed, "Sender must be owner of the address");
         _;
     }
 
@@ -59,7 +68,7 @@ contract RobotTxt is IRobotTxt, Ownable {
 
     /// @notice registers a new license URI _for a license owned by the license owner
     /// @param _for the address of the license to register
-    /// @param _licenseUri the URI of the license
+    /// @param _licenseUri the URI of the licens10
     /// @param _info the URI of the license info
     function setDefaultLicense(address _for, string memory _licenseUri, string memory _info)
         public
