@@ -153,16 +153,6 @@ contract RobotTxtTest is Test {
         robotTxt.setDefaultLicense(address(666), EXAMPLE_URI, EXAMPLE_INFO);
     }
 
-    function testCanSetLicenseOnOwnAddress() public {
-        address THE_USER = address(10);
-        vm.prank(THE_USER);
-        robotTxt.setDefaultLicense(THE_USER, EXAMPLE_URI, EXAMPLE_INFO);
-
-        (string memory uri, string memory info) = robotTxt.licenseOf(THE_USER);
-        assertEq(uri, EXAMPLE_URI);
-        assertEq(info, EXAMPLE_INFO);
-    }
-
     function testCannotSetDefaultLicenseNotOwnedNotWhitelisted() public {
         vm.expectRevert();
         vm.prank(USER1);
@@ -257,7 +247,7 @@ contract RobotTxtTest is Test {
         vm.prank(OWNER);
         robotTxt.whitelistOwnerContract(USER1, address(user1NotOwned1));
 
-        assertEq(robotTxt.contractAddressToOwnerWhitelist(address(user1NotOwned1)), USER1);
+        assertEq(robotTxt.contractAddressToOwnerAllowList(address(user1NotOwned1)), USER1);
     }
 
     function testWhitelistOwnerContractZeroAddress() public {
@@ -291,7 +281,7 @@ contract RobotTxtTest is Test {
         vm.prank(OWNER);
         robotTxt.delistOwnerContract(USER1, address(user1NotOwned1));
 
-        assertEq(robotTxt.contractAddressToOwnerWhitelist(address(user1NotOwned1)), address(0));
+        assertEq(robotTxt.contractAddressToOwnerAllowList(address(user1NotOwned1)), address(0));
     }
 
     function testDelistOwnerContractZeroAddress() public {

@@ -40,23 +40,21 @@ contract RobotTxt is IRobotTxt, Ownable {
     IRobot public robot;
     mapping(address => LicenseData) public licenseOf;
     mapping(address => address[]) public ownerLicenses;
-    mapping(address => address) public contractAddressToOwnerWhitelist;
+    mapping(address => address) public contractAddressToOwnerAllowList;
     uint256 public totalLicenseCount;
 
     modifier senderMustBeOwnerOf(address _owned) {
         if (_owned == address(0)) revert ZeroAddress();
-        bool isSelfOwner = msg.sender == _owned;
-        bool isWhiteListed = contractAddressToOwnerWhitelist[_owned] == msg.sender;
+        bool isAllowListed = contractAddressToOwnerAllowList[_owned] == msg.sender;
         bool isOwnableOwner = false;
 
-        if (!isSelfOwner && !isWhiteListed) {
-            try Ownable(_owned).owner() returns (address contractOwner) {
-                if (msg.sender == contractOwner) {
-                    isOwnableOwner = true;
-                }
-            } catch {}
+        try Ownable(_owned).owner() returns (address contractOwner) {
+            if (msg.sender == contractOwner) {
+                isOwnableOwner = true;
+            }
+        } catch {
         }
-        require(isSelfOwner || isOwnableOwner || isWhiteListed, "Sender must be owner of the address");
+        require(isOwnableOwner || isAllowListed, "Sender must be owner of the address");
         _;
     }
 
@@ -122,15 +120,15 @@ contract RobotTxt is IRobotTxt, Ownable {
 
     function whitelistOwnerContract(address owner, address contractAddress) external onlyOwner {
         if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
-        if (contractAddressToOwnerWhitelist[contractAddress] == owner) revert AlreadyWhitelisted();
-        contractAddressToOwnerWhitelist[contractAddress] = owner;
+        if (contractAddressToOwnerAllowList[contractAddress] == owner) revert AlreadyWhitelisted();
+        contractAddressToOwnerAllowList[contractAddress] = owner;
         emit ContractWhitelisted(owner, contractAddress);
     }
 
     function delistOwnerContract(address owner, address contractAddress) external onlyOwner {
         if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
-        if (contractAddressToOwnerWhitelist[contractAddress] != owner) revert NotWhitelisted();
-        delete contractAddressToOwnerWhitelist[contractAddress];
+        if (contractAddressToOwnerAllowList[contractAddress] != owner) revert NotWhitelisted();
+        delete contractAddressToOwnerAllowList[contractAddress];
         emit ContractDelisted(owner, contractAddress);
     }
 }
