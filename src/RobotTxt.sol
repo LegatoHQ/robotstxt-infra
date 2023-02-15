@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 /**
- *
- *                     $$\                  $$\                        $$\                 $$\
- *                     $$ |                 $$ |                       $$ |                $$ |
- *  $$$$$$\   $$$$$$\  $$$$$$$\   $$$$$$\ $$$$$$\    $$$$$$$\        $$$$$$\   $$\   $$\ $$$$$$\       $$\   $$\ $$\   $$\ $$$$$$$$\
- * $$  __$$\ $$  __$$\ $$  __$$\ $$  __$$\\_$$  _|  $$  _____|$$$$$$\\_$$  _|  \$$\ $$  |\_$$  _|      \$$\ $$  |$$ |  $$ |\____$$  |
- * $$ |  \__|$$ /  $$ |$$ |  $$ |$$ /  $$ | $$ |    \$$$$$$\  \______| $$ |     \$$$$  /   $$ |         \$$$$  / $$ |  $$ |  $$$$ _/
- * $$ |      $$ |  $$ |$$ |  $$ |$$ |  $$ | $$ |$$\  \____$$\          $$ |$$\  $$  $$<    $$ |$$\      $$  $$<  $$ |  $$ | $$  _/
- * $$ |      \$$$$$$  |$$$$$$$  |\$$$$$$  | \$$$$  |$$$$$$$  |         \$$$$  |$$  /\$$\   \$$$$  |$$\ $$  /\$$\ \$$$$$$$ |$$$$$$$$\
- * \__|       \______/ \_______/  \______/   \____/ \_______/           \____/ \__/  \__|   \____/ \__|\__/  \__| \____$$ |\________|
- *                                                                                                               $$\   $$ |
- *                                                                                                               \$$$$$$  |
- *                                                                                                                \______/
+ *  ██████╗  ██████╗ ██████╗  ██████╗ ████████╗███████╗           ████████╗██╗  ██╗████████╗
+ *  ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝           ╚══██╔══╝╚██╗██╔╝╚══██╔══╝
+ *  ██████╔╝██║   ██║██████╔╝██║   ██║   ██║   ███████╗              ██║    ╚███╔╝    ██║   
+ *  ██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   ╚════██║              ██║    ██╔██╗    ██║   
+ *  ██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   ███████║    ██╗       ██║   ██╔╝ ██╗   ██║   
+ *  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝    ╚═╝       ╚═╝   ╚═╝  ╚═╝   ╚═╝   
  *
  * A robots.txt file tells search engine crawlers which URLs the crawler can access on your site.
  * In web3, we can use this robots-txt registry contract to let aggregators anyone else that scape the the blockchain and IPFs
@@ -19,14 +13,14 @@
  *
  * How this works:
  * -------------------
- * You (or a contract) can only set a license URI _for your own address,
- * or _for a contract that has an "owner()" function that returns your address.
+ * You can set a default license uri and info  for any address 
+ * of a contract that has an "owner()" function that returns your address.
+ * When yo udo this, you get a special ROBOT token that you can use to remove the license later (and then it gets burned)
  *
+ * call setDefaultLicense(address _for, string _licenseUri, string info) to set a license _for your address or a contract you own.
+ * call licenseOf(address _address) to get the license and info for an address. if none is set, it will return an empty string.
  *
- * call setDefaultLicense(address _for, string memory _licenseUri) to set a license _for your address or a contract you own.
- * call getDefaultLicense(address _address) to get the license _for an address. if none is set, it will return an empty string.
- *
- * by Roy Osherove
+ * by Roy Osherove, Niv Mimran
  */
 pragma solidity ^0.8.13;
 
@@ -89,10 +83,10 @@ contract RobotTxt is IRobotTxt, Ownable {
     }
 
     /// @notice returns a license count for a given owner
-    /// @param owner the owner of the licenses
+    /// @param _owner the owner of the licenses
     /// @return licenseCount
-    function getOwnerLicenseCount(address owner) external view returns (uint256) {
-        return ownerLicenses[owner].length;
+    function getOwnerLicenseCount(address _owner) external view returns (uint256) {
+        return ownerLicenses[_owner].length;
     }
 
     /// @notice remove a license URI _for a license owned by the license owner
@@ -117,22 +111,22 @@ contract RobotTxt is IRobotTxt, Ownable {
         }
 
         robot.burn(msg.sender);
-        ++totalLicenseCount;
+        --totalLicenseCount;
 
         emit LicenseRemoved(msg.sender, _for);
     }
 
-    function whitelistOwnerContract(address owner, address contractAddress) external onlyOwner {
-        if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
-        if (contractAddressToOwnerAllowList[contractAddress] == owner) revert AlreadyWhitelisted();
-        contractAddressToOwnerAllowList[contractAddress] = owner;
-        emit ContractWhitelisted(owner, contractAddress);
+    function whitelistOwnerContract(address _owner, address _contractAddress) external onlyOwner {
+        if (_owner == address(0) || _contractAddress == address(0)) revert ZeroAddress();
+        if (contractAddressToOwnerAllowList[_contractAddress] == _owner) revert AlreadyWhitelisted();
+        contractAddressToOwnerAllowList[_contractAddress] = _owner;
+        emit ContractWhitelisted(_owner, _contractAddress);
     }
 
-    function delistOwnerContract(address owner, address contractAddress) external onlyOwner {
-        if (owner == address(0) || contractAddress == address(0)) revert ZeroAddress();
-        if (contractAddressToOwnerAllowList[contractAddress] != owner) revert NotWhitelisted();
-        delete contractAddressToOwnerAllowList[contractAddress];
-        emit ContractDelisted(owner, contractAddress);
+    function delistOwnerContract(address _owner, address _contractAddress) external onlyOwner {
+        if (_owner == address(0) || _contractAddress == address(0)) revert ZeroAddress();
+        if (contractAddressToOwnerAllowList[_contractAddress] != _owner) revert NotWhitelisted();
+        delete contractAddressToOwnerAllowList[_contractAddress];
+        emit ContractDelisted(_owner, _contractAddress);
     }
 }
