@@ -46,13 +46,13 @@ contract RobotTxt is IRobotTxt, Ownable {
     modifier senderMustBeOwnerOf(address _owned) {
         if (_owned == address(0)) revert ZeroAddress();
         bool isAllowListed = contractAddressToOwnerAllowList[_owned] == msg.sender;
-        bool isOwnableOwner = false;
+        bool isOwnableOwner; // false by default
 
         try Ownable(_owned).owner() returns (address contractOwner) {
             if (msg.sender == contractOwner) {
                 isOwnableOwner = true;
             }
-        } catch {
+        } catch { // no error handling in `catch`?
         }
         require(isOwnableOwner || isAllowListed, "Sender must be owner of the address");
         _;
@@ -77,11 +77,13 @@ contract RobotTxt is IRobotTxt, Ownable {
 
         if (bytes(licenseData.uri).length == 0) {
             robot.mint(msg.sender);
-            totalLicenseCount++;
+            ++totalLicenseCount;
             ownerLicenses[msg.sender].push(_for);
         }
 
-        licenseOf[_for] = LicenseData(_licenseUri, _info);
+        // licenseOf[_for] = LicenseData(_licenseUri, _info);
+        licenseOf[_for].uri = _licenseUri;
+        licenseOf[_for].info = _info;
 
         emit LicenseSet(msg.sender, _for, _licenseUri, _info);
     }
@@ -106,14 +108,16 @@ contract RobotTxt is IRobotTxt, Ownable {
         address[] memory licenses = ownerLicenses[msg.sender];
         delete ownerLicenses[msg.sender];
 
-        for (uint256 i = 0; i < licenses.length; i++) {
+        uint length = licenses.length;
+        for (uint256 i; i < length;) {
             if (licenses[i] != _for) {
                 ownerLicenses[msg.sender].push(licenses[i]);
             }
+            unchecked { ++i; }
         }
 
         robot.burn(msg.sender);
-        totalLicenseCount--;
+        ++totalLicenseCount;
 
         emit LicenseRemoved(msg.sender, _for);
     }
