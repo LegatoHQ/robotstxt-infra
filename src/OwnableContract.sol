@@ -5,8 +5,10 @@ import "lib/openzeppelin-contracts/contracts//access/Ownable.sol";
 // import "forge-std/console.sol";
 //forge console
 
-contract OwnableContract is Ownable {
+contract OwnableContract {
+    address public owner;
+
     constructor(address _newOwner) {
-        _transferOwnership(_newOwner);
+        owner = _newOwner;
     }
 }
