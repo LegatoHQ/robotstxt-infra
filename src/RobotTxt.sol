@@ -2,10 +2,10 @@
 /**
  *  ██████╗  ██████╗ ██████╗  ██████╗ ████████╗███████╗           ████████╗██╗  ██╗████████╗
  *  ██╔══██╗██╔═══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝           ╚══██╔══╝╚██╗██╔╝╚══██╔══╝
- *  ██████╔╝██║   ██║██████╔╝██║   ██║   ██║   ███████╗              ██║    ╚███╔╝    ██║   
- *  ██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   ╚════██║              ██║    ██╔██╗    ██║   
- *  ██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   ███████║    ██╗       ██║   ██╔╝ ██╗   ██║   
- *  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝    ╚═╝       ╚═╝   ╚═╝  ╚═╝   ╚═╝   
+ *  ██████╔╝██║   ██║██████╔╝██║   ██║   ██║   ███████╗              ██║    ╚███╔╝    ██║
+ *  ██╔══██╗██║   ██║██╔══██╗██║   ██║   ██║   ╚════██║              ██║    ██╔██╗    ██║
+ *  ██║  ██║╚██████╔╝██████╔╝╚██████╔╝   ██║   ███████║    ██╗       ██║   ██╔╝ ██╗   ██║
+ *  ╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝    ╚═╝       ╚═╝   ╚═╝  ╚═╝   ╚═╝
  *
  * A robots.txt file tells search engine crawlers which URLs the crawler can access on your site.
  * In web3, we can use this robots-txt registry contract to let aggregators anyone else that scape the the blockchain and IPFs
@@ -13,7 +13,7 @@
  *
  * How this works:
  * -------------------
- * You can set a default license uri and info  for any address 
+ * You can set a default license uri and info  for any address
  * of a contract that has an "owner()" function that returns your address.
  * When yo udo this, you get a special ROBOT token that you can use to remove the license later (and then it gets burned)
  *
@@ -102,12 +102,14 @@ contract RobotTxt is IRobotTxt, Ownable {
         address[] memory licenses = ownerLicenses[msg.sender];
         delete ownerLicenses[msg.sender];
 
-        uint length = licenses.length;
+        uint256 length = licenses.length;
         for (uint256 i; i < length;) {
             if (licenses[i] != _for) {
                 ownerLicenses[msg.sender].push(licenses[i]);
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
 
         robot.burn(msg.sender);

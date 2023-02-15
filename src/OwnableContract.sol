@@ -7,7 +7,8 @@ import "lib/openzeppelin-contracts/contracts//access/Ownable.sol";
 
 contract OwnableContract {
     address public owner;
+
     constructor(address _newOwner) {
-        owner=_newOwner;
+        owner = _newOwner;
     }
 }
