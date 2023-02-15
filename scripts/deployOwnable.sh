@@ -4,13 +4,11 @@
 # or https://stackoverflow.com/questions/14219092/bash-script-bin-bashm-bad-interpreter-no-such-file-or-directory
 # or https://stackoverflow.com/questions/10376206/what-is-the-preferred-bash-shebang
 
-source .env
-source ./scripts/deployParams.sh
-echo $DEPLOYER_PRIVATE_KEY
+source .env.$1.sh
 
 forge create --rpc-url $MAINNET_RPC \
     --private-key $DEPLOYER_PRIVATE_KEY \
-    --constructor-args $WRITER_ADDRESS \
+    --constructor-args $2 \
     --etherscan-api-key $ETHERSCAN_API_KEY \
     src/OwnableContract.sol:OwnableContract  
       # --verify \

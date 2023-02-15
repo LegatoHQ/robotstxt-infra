@@ -3,4 +3,6 @@
 # sed -i -e 's/\r$//' ./scripts/*.sh
 source .env.$1.sh
 
-cast send $TOKEN_ADDRESS --rpc-url $MAINNET_RPC "setRobotTxt(address)()" $ROBOT_TXT_ADDRESS --private-key $DEPLOYER_PRIVATE_KEY
+# cast send $ROBOT_TXT_ADDRESS --rpc-url $MAINNET_RPC "licenseOf(address)()" $ADDRESS 
+echo "getting owner"
+cast call $2 --rpc-url $MAINNET_RPC "owner()(address)" 
