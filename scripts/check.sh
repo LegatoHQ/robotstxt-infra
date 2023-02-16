@@ -9,21 +9,24 @@ then
   exit 1
 fi
 
-echo calling $TOKEN_ADDRESS
-result=$(cast call $TOKEN_ADDRESS --rpc-url $MAINNET_RPC "robotTxt()(address)" 2>&1)
-echo got: $result
 echo
+echo "----------------"
+echo checking on $1
+echo "calling    $TOKEN_ADDRESS"
+result=$(cast call $TOKEN_ADDRESS --rpc-url $MAINNET_RPC "robotTxt()(address)" 2>&1)
+echo "got:      $result"
 # check equal to $ROBOT_TXT_ADDRESS
 if [ "$result" = "$ROBOT_TXT_ADDRESS" ]; then
-echo "----------------"
-  echo "OK: Owner is Robot.txt"
-echo "----------------"
-  exit 0
+    echo -n -e "\u2705" 
+    echo  " OK"
+    echo "----------------"
+    exit 0
 else
 
-echo "----------------"
-  echo "ERROR: Owner is not Robot.txt"
-echo "----------------"
-  echo expected: $ROBOT_TXT_ADDRESS
-  exit 1
+    echo -n -e "\u274c"
+    echo " ERROR: Owner is not Robot.txt"
+    echo "----------------"
+    echo expected: $ROBOT_TXT_ADDRESS
+    echo "----------------"
+    exit 1
 fi  
