@@ -4,4 +4,5 @@
 source .env.$1.sh
 
 # cast send $ROBOT_TXT_ADDRESS --rpc-url $MAINNET_RPC "licenseOf(address)()" $ADDRESS 
-cast call $2 --rpc-url $MAINNET_RPC "owner()(address)" 
+echo "getting robotTxt attached"
+cast call $TOKEN_ADDRESS --rpc-url $MAINNET_RPC "robotTxt()(address)" 
