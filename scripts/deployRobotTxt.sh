@@ -8,6 +8,8 @@ source .env.$1.sh
 
 forge create \
     ./src/RobotTxt.sol:RobotTxt \
+    --optimize \
+    --optimizer-runs 200 \
     --rpc-url $MAINNET_RPC \
     --private-key $DEPLOYER_PRIVATE_KEY \
     --constructor-args $TOKEN_ADDRESS  \

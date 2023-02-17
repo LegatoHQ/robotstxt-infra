@@ -7,6 +7,8 @@
 source .env.$1.sh
 
 forge create --rpc-url $MAINNET_RPC \
+    --optimize \
+    --optimizer-runs 200 \
     --private-key $DEPLOYER_PRIVATE_KEY \
     --constructor-args $TOKEN_NAME $TOKEN_SYMBOL \
     --etherscan-api-key $ETHERSCAN_API_KEY \
