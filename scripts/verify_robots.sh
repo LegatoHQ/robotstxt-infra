@@ -17,6 +17,7 @@ fi
 echo
 echo "----------------"
     
+
 forge verify-contract --chain-id $CHAIN_ID \
     --num-of-optimizations 200 --watch  \
     --compiler-version v0.8.13          \

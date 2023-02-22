@@ -12,9 +12,9 @@ fi
 echo
 echo "----------------"
 echo checking on $1
-echo "calling    $TOKEN_ADDRESS"
+echo "token:    $TOKEN_ADDRESS"
 result=$(cast call $TOKEN_ADDRESS --rpc-url $MAINNET_RPC "robotTxt()(address)" 2>&1)
-echo "got:      $result"
+echo "Robots TXT:      $result"
 # check equal to $ROBOT_TXT_ADDRESS
 if [ "$result" = "$ROBOT_TXT_ADDRESS" ]; then
     echo -n -e "\u2705" 

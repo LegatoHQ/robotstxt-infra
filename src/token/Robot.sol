@@ -20,6 +20,9 @@ contract Robot is IRobot, ERC20Burnable, Ownable {
         super._mint(to, 1);
     }
 
+    function decimals() public view virtual override returns (uint8) {
+        return 0;
+    }
     function burn(address from) external override onlyRobotTxt {
         super._burn(from, 1);
     }
